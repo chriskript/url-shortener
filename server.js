@@ -1,24 +1,28 @@
 import express from 'express';
 import { nanoid } from 'nanoid';
-import bodyParser from 'body-parser';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 const urlDatabase = {};
 
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
+app.use(express.json());
 
 app.post('/shorten', (req, res) => {
-  const originalUrl = req.body.url;
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: 'URL is required' });
+  }
   const shortId = nanoid(7);
-  urlDatabase[shortId] = originalUrl;
-  res.send(`Shortened URL: <a href="/${shortId}">${req.headers.host}/${shortId}</a>`);
+  urlDatabase[shortId] = url;
+  const shortUrl = `${req.headers.host}/${shortId}`;
+  res.json({ shortUrl });
 });
 
 app.get('/:id', (req, res) => {
-  const originalUrl = urlDatabase[req.params.id];
+  const { id } = req.params;
+  const originalUrl = urlDatabase[id];
   if (originalUrl) {
     res.redirect(originalUrl);
   } else {
